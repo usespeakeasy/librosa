@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
 
+import io
 import pathlib
 import warnings
 
@@ -162,9 +163,10 @@ def load(
             y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
         except RuntimeError as exc:
+            if isinstance(path, io.BufferedReader):
+                path = path.name
             # If soundfile failed, try audioread instead
             if isinstance(path, (str, pathlib.PurePath)):
-                warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
                 y, sr_native = __audioread_load(path, offset, duration, dtype)
             else:
                 raise exc
@@ -980,7 +982,7 @@ def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
     bwd_pred_error = y[:-1]
 
     # DEN_{M} from eqn 16 of Marple.
-    den[0] = np.sum(fwd_pred_error ** 2 + bwd_pred_error ** 2, axis=0)
+    den[0] = np.sum(fwd_pred_error**2 + bwd_pred_error**2, axis=0)
 
     for i in range(order):
         # can be removed if we keep the epsilon bias
